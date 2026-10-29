@@ -40,7 +40,9 @@
           "imageWidth": 240
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-video",
+      "react-native-blob-util"
     ],
     "experiments": {
       "typedRoutes": true,

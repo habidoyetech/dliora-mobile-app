@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, use, useCallback, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
 import { api, ApiError, setUnauthorizedHandler } from '@/lib/api';
+import { disconnectEcho } from '@/lib/echo';
 import { secureStorage } from '@/lib/secure-storage';
 
 const TOKEN_KEY = 'dliora.access_token';
@@ -32,7 +33,12 @@ export type User = {
   must_change_password: boolean;
   bootcamp_level: string | null;
   status?: UserStatus | null;
+  region?: string | null;
   region_name?: string | null;
+  niche?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  member_since?: string | null;
   manager?: { status: 'certified' | 'pending'; since: string | null } | null;
   /** Per role: set while that portal is restricted, else null. */
   restrictions?: {
@@ -55,6 +61,11 @@ type Session = {
   signIn: (login: string, password: string) => Promise<User>;
   signOut: () => Promise<void>;
   changePassword: (input: ChangePasswordInput) => Promise<void>;
+  /**
+   * Replaces the held profile — after the person edits their own details or
+   * changes their picture — and re-caches it for the next cold start.
+   */
+  refreshUser: (profile: User) => Promise<void>;
 };
 
 export type ChangePasswordInput = {
@@ -122,6 +133,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const clearSession = useCallback(async () => {
     setToken(null);
     setUser(null);
+    // Otherwise the chat socket stays subscribed as the person signing out.
+    disconnectEcho();
     // Without this the next person to sign in on this device would be served
     // the previous one's cached campaigns, training progress and profile.
     queryClient.clear();
@@ -242,6 +255,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
     [token],
   );
 
+  const refreshUser = useCallback(async (profile: User) => {
+    setUser(profile);
+    await secureStorage.set(USER_KEY, JSON.stringify(profile)).catch(() => {});
+  }, []);
+
   const signOut = useCallback(async () => {
     const current = token;
     await clearSession();
@@ -252,8 +270,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, [token, clearSession]);
 
   const value = useMemo(
-    () => ({ isLoading, token, user, signIn, signOut, changePassword }),
-    [isLoading, token, user, signIn, signOut, changePassword],
+    () => ({ isLoading, token, user, signIn, signOut, changePassword, refreshUser }),
+    [isLoading, token, user, signIn, signOut, changePassword, refreshUser],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;

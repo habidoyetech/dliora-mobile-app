@@ -18,6 +18,8 @@ type Options = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string | null;
+  /** Extra request headers — `X-Socket-ID`, so a live socket isn't echoed to itself. */
+  headers?: Record<string, string>;
   /** Skip the global 401 handler (used by the session's own refresh). */
   skipUnauthorizedHandler?: boolean;
 };
@@ -45,7 +47,7 @@ function messageFrom(status: number, json: any): string {
 /** JSON request to the D-Liora API. Throws {@link ApiError}. */
 export async function api<T>(
   path: string,
-  { method = 'GET', body, token, skipUnauthorizedHandler }: Options = {},
+  { method = 'GET', body, token, headers, skipUnauthorizedHandler }: Options = {},
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -59,6 +61,7 @@ export async function api<T>(
         Accept: 'application/json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
