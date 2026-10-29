@@ -18,7 +18,20 @@ type Options = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string | null;
+  /** Skip the global 401 handler (used by the session's own refresh). */
+  skipUnauthorizedHandler?: boolean;
 };
+
+/**
+ * Called once when the API rejects a token we sent (401) — the session
+ * provider registers this so an expired or revoked token signs the user out
+ * wherever they are in the app, instead of each screen handling it.
+ */
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler;
+}
 
 /** The first readable message from a Laravel error response. */
 function messageFrom(status: number, json: any): string {
@@ -30,7 +43,10 @@ function messageFrom(status: number, json: any): string {
 }
 
 /** JSON request to the D-Liora API. Throws {@link ApiError}. */
-export async function api<T>(path: string, { method = 'GET', body, token }: Options = {}): Promise<T> {
+export async function api<T>(
+  path: string,
+  { method = 'GET', body, token, skipUnauthorizedHandler }: Options = {},
+): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -55,6 +71,11 @@ export async function api<T>(path: string, { method = 'GET', body, token }: Opti
   const json = await response.json().catch(() => null);
 
   if (!response.ok) {
+    // Only when we actually sent a token: a 401 from /auth/login is a bad
+    // password, not an expired session.
+    if (response.status === 401 && token && !skipUnauthorizedHandler) {
+      onUnauthorized?.();
+    }
     throw new ApiError(messageFrom(response.status, json), response.status, json?.errors ?? {});
   }
 

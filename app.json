@@ -6,11 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "dliora",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#0C0D0E",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.habidoyetech.dlioramobileapp",
+      "bundleIdentifier": "com.dliora.app",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -24,7 +24,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.habidoyetech.dlioramobileapp"
+      "package": "com.dliora.app"
     },
     "web": {
       "output": "static",
@@ -49,9 +49,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3a471449-d26e-40c5-991a-f457a23d2ed0"
+        "projectId": "4a1a6fd1-5c59-4316-8fca-b4e7997aa7b7"
       }
     },
-    "owner": "habidoyetech"
+    "owner": "dliora-academy"
   }
 }
