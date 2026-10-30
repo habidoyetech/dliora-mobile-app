@@ -39,7 +39,7 @@ export function PrimaryButton({ label, loading, disabled, onPressIn, onPressOut,
 const styles = StyleSheet.create({
   button: {
     height: 56,
-    borderRadius: Radius.button,
+    borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Brand.gold,
